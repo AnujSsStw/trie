@@ -32,53 +32,40 @@ func (t *Trie) insertText(text string) {
 	curr.end = true
 }
 
-func Autocomplete(node *Node, prefix string) {
+func Autocomplete(node *Node, prefix string, sugg *[]string) {
 	if node == nil {
 		return
 	}
 
 	if node.end {
-		fmt.Println(prefix)
+		*sugg = append(*sugg, prefix)
+		// fmt.Println(prefix)
 	}
 
 	for i, child := range node.children {
 		if child != nil {
 			su := string(rune('a' + i))
-			Autocomplete(child, prefix+su)
+			Autocomplete(child, prefix+su, sugg)
 		}
 	}
 
 }
-func printAutoSuggestions(root *Node, text string) int {
+func printAutoSuggestions(root *Node, text string) []string {
 	pCrawl := root
 	text = strings.ToLower(text)
 	zero := []rune("a")[0]
+	sugg := []string{}
+
 	for _, e := range text {
 		idx := e - zero
 		if pCrawl.children[idx] != nil {
 			pCrawl = pCrawl.children[idx]
 		} else {
-			return 0
+			return sugg
 		}
 	}
-	Autocomplete(pCrawl, text)
-	return 1
-}
-
-func PrintTrieDOT(node *Node, parent string, parIdx int) {
-	for i, child := range node.children {
-		if child != nil {
-			var color string
-			if child.end {
-				color = "green"
-			} else {
-				color = "pink"
-			}
-			fmt.Printf(`	"%s" -> "%s" [color=%s];`, parent, child.val, color)
-			fmt.Println()
-			PrintTrieDOT(child, child.val, i+1)
-		}
-	}
+	Autocomplete(pCrawl, text, &sugg)
+	return sugg
 }
 
 func main() {
@@ -97,7 +84,24 @@ func main() {
 
 	if len(*autoCum) > 0 {
 		fmt.Println("Autocomplete suggestions:")
-		printAutoSuggestions(a.RootNode, *autoCum)
+		ans := printAutoSuggestions(a.RootNode, *autoCum)
+		fmt.Printf("%+q", ans)
 	}
 
+}
+
+func PrintTrieDOT(node *Node, parent string, parIdx int) {
+	for i, child := range node.children {
+		if child != nil {
+			var color string
+			if child.end {
+				color = "green"
+			} else {
+				color = "pink"
+			}
+			fmt.Printf(`	"%s" -> "%s" [color=%s];`, parent, child.val, color)
+			fmt.Println()
+			PrintTrieDOT(child, child.val, i+1)
+		}
+	}
 }
